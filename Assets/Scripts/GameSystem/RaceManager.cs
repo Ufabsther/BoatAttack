@@ -7,6 +7,7 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.SceneManagement;
 using BoatAttack.UI;
+using Unity.Netcode;
 using UnityEngine.Playables;
 using UnityEngine.Rendering.Universal;
 using Random = UnityEngine.Random;
@@ -126,20 +127,36 @@ namespace BoatAttack
             switch (RaceData.game)
             {
                 case GameType.Singleplayer:
+                {
                     yield return Instance.StartCoroutine(CreatePlayerUi(0));
                     SetupCamera(0); // setup camera for player 1
                     break;
+                }
                 case GameType.LocalMultiplayer:
+                {
                     break;
+                }
                 case GameType.Multiplayer:
+                {
+                    GameObject prefab = Resources.Load<GameObject>("NetworkManager");
+                    GameObject networkManagerInstance = GameObject.Instantiate(prefab);
+                    NetworkManager networkManager = networkManagerInstance.GetComponent<NetworkManager>();
+                    networkManager.StartClient();
                     break;
+                }
                 case GameType.Spectator:
+                {
                     ReplayCamera.Instance.EnableSpectatorMode();
                     break;
+                }
                 case GameType.Benchmark:
+                {
                     break;
+                }
                 default:
+                {
                     throw new ArgumentOutOfRangeException();
+                }
             }
             
             Instance.StartCoroutine(BeginRace());
