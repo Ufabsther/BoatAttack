@@ -55,6 +55,12 @@ namespace BoatAttack.UI
             SetupDefaults();
         }
 
+        public void SetupMultiplayerGame()
+        {
+            RaceManager.SetGameType(RaceManager.GameType.Multiplayer);
+            SetupDefaults();
+        }
+
         public void SetupSpectatorGame()
         {
             RaceManager.SetGameType(RaceManager.GameType.Spectator);
@@ -68,6 +74,11 @@ namespace BoatAttack.UI
         private static void SetReverse(int reverse) => RaceManager.RaceData.reversed = reverse == 1;
 
         public void StartRace() => RaceManager.LoadGame();
+
+        public void StartMatchMaking()
+        {
+            Debug.Log("Starting MatchMaking");
+        }
 
         public void SetSinglePlayerName(string playerName) => RaceManager.RaceData.boats[0].boatName = playerName;
 
