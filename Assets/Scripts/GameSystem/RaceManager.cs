@@ -36,6 +36,14 @@ namespace BoatAttack
         }
 
         [Serializable]
+        public enum RaceStatus
+        {
+            PreRace,
+            Race,
+            PostRace
+        }
+
+        [Serializable]
         public class Race
         {
             //Race options
@@ -57,6 +65,7 @@ namespace BoatAttack
         public static RaceManager Instance;
         [NonSerialized] public static bool RaceStarted;
         [NonSerialized] public static Race RaceData;
+        [NonSerialized] public static RaceStatus RaceState;
         public Race demoRaceData = new Race();
         [NonSerialized] public static float RaceTime;
         private readonly Dictionary<int, float> _boatTimes = new Dictionary<int, float>();
@@ -77,6 +86,7 @@ namespace BoatAttack
                         var raceUi = RaceData.boats[0].Boat.RaceUi;
                         raceUi.MatchEnd();
                         ReplayCamera.Instance.EnableSpectatorMode();
+                        RaceState = RaceStatus.PostRace;
                     }
                     break;
                 case GameType.LocalMultiplayer:
@@ -102,6 +112,7 @@ namespace BoatAttack
         private void Reset()
         {
             RaceStarted = false;
+            RaceState = RaceStatus.PreRace;
             RaceData.boats.Clear();
             RaceTime = 0f;
             _boatTimes.Clear();
@@ -192,6 +203,7 @@ namespace BoatAttack
         /// <returns></returns>
         private static IEnumerator BeginRace()
         {
+            RaceState = RaceStatus.PreRace;
             var introCams = GameObject.FindWithTag("introCameras");
             introCams.TryGetComponent<PlayableDirector>(out var introDirector);
 
@@ -208,6 +220,7 @@ namespace BoatAttack
             
             RaceStarted = true;
             raceStarted?.Invoke(RaceStarted);
+            RaceState = RaceStatus.Race;
             
             SceneManager.sceneLoaded -= Setup;
         }
@@ -279,7 +292,8 @@ namespace BoatAttack
 
         public static void UnloadRace()
         {
-            Debug.LogWarning("Unloading Race");
+            ReplayCamera.Instance.DisableSpectatorMode();
+            Debug.Log("Unloading Race");
             if(Instance.raceUiPrefab != null && Instance.raceUiPrefab.IsValid())
             {
                 Instance.raceUiPrefab.ReleaseAsset();
@@ -298,9 +312,10 @@ namespace BoatAttack
                 var boat = RaceData.boats[i]; // boat to setup
 
                 // Load prefab
-                var startingPosition = WaypointGroup.Instance.StartingPositions[i];
-                AsyncOperationHandle<GameObject> boatLoading = Addressables.InstantiateAsync(boat.boatPrefab, startingPosition.GetColumn(3),
-                    Quaternion.LookRotation(startingPosition.GetColumn(2)));
+                var startingTransform = WaypointGroup.Instance.StartingPositions[i];
+                var startingPosition = startingTransform.GetPosition();
+                var startingRotation = Quaternion.LookRotation(startingTransform.GetColumn(2));
+                AsyncOperationHandle<GameObject> boatLoading = Addressables.InstantiateAsync(boat.boatPrefab, startingPosition, startingRotation);
 
                 yield return boatLoading; // wait for boat asset to load
 
